@@ -1,8 +1,11 @@
-import { Plugin, MarkdownView, WorkspaceLeaf } from 'obsidian';
+import { Plugin, MarkdownView, WorkspaceLeaf, editorLivePreviewField } from 'obsidian';
+import type { EditorView as CodeMirrorEditorView } from '@codemirror/view';
 
 type ViewMode = 'reading' | 'live-preview' | 'source';
 
 export default class Cyclist extends Plugin {
+	private transition: Promise<void> | null = null;
+
 	onload() {
 		this.addCommand({
 			id: 'cycle-view-modes',
@@ -16,8 +19,16 @@ export default class Cyclist extends Plugin {
 
 		if (mode === 'preview') return 'reading';
 		if (mode === 'source') {
-			const state = view.getState();
-			return state?.source === false ? 'live-preview' : 'source';
+			const editor = view.editor;
+			if (!editor) return 'source';
+
+			// The public Editor type does not expose the CodeMirror 6 EditorView.
+			// This is the documented pattern: https://docs.obsidian.md/Plugins/Editor/Communicating+with+editor+extensions
+			const cm: CodeMirrorEditorView | undefined = (editor as unknown as { cm?: CodeMirrorEditorView }).cm;
+			if (!cm) return 'source';
+
+			const isLivePreview = cm.state.field(editorLivePreviewField, false);
+			return isLivePreview ? 'live-preview' : 'source';
 		}
 
 		// Defensive fallback: Obsidian currently only exposes 'preview' and 'source'.
@@ -30,7 +41,7 @@ export default class Cyclist extends Plugin {
 		return cycle[(index + 1) % cycle.length];
 	}
 
-	private setViewMode(leaf: WorkspaceLeaf, mode: ViewMode) {
+	private async setViewMode(leaf: WorkspaceLeaf, mode: ViewMode): Promise<void> {
 		const viewState = leaf.getViewState();
 
 		if (viewState.type !== 'markdown') return;
@@ -55,17 +66,24 @@ export default class Cyclist extends Plugin {
 				return;
 		}
 
-		void leaf.setViewState({ ...viewState, state: nextState });
+		await leaf.setViewState({ ...viewState, state: nextState });
 	}
 
-	private cycleViewModes() {
+	private async cycleViewModes(): Promise<void> {
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		if (!activeView) return;
+
+		// Prevent rapid hotkey presses from overlapping transitions.
+		if (this.transition) {
+			await this.transition;
+		}
 
 		const currentMode = this.getCurrentMode(activeView);
 		const nextMode = this.getNextMode(currentMode);
 
 		const leaf = activeView.leaf;
-		void this.setViewMode(leaf, nextMode);
+		this.transition = this.setViewMode(leaf, nextMode);
+		await this.transition;
+		this.transition = null;
 	}
 }

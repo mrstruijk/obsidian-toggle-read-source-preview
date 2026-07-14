@@ -1,11 +1,12 @@
 # AGENTS.md — Cyclist
 
-Small Obsidian plugin that adds a single command cycling all open Markdown leaves through **reading → live-preview → source**.
+Small Obsidian plugin that adds a single command cycling the **active Markdown editor** through **reading → live-preview → source**.
 
 ## Development commands
 
 - `npm run dev` — esbuild watch; builds `main.js` on every save.
 - `npm run build` — typecheck (`tsc -noEmit -skipLibCheck`) then esbuild in production mode; produces `main.js`.
+- `npm run lint` — run ESLint flat config.
 
 Command order matters: `build` runs typecheck before bundling. There is no test suite; manual verification is loading/reloading the plugin in Obsidian.
 
@@ -17,14 +18,15 @@ Command order matters: `build` runs typecheck before bundling. There is no test 
 ## Architecture
 
 - Single source file: `main.ts`.
-- Plugin class `Cyclist` registers command `cyclist`.
-- `main.ts` calls the private Obsidian API `Vault.setConfig('livePreview', ...)`, augmented in `types.d.ts`. This may break on Obsidian updates.
-- `version-bump.mjs` only works when run via `npm version` because it reads `npm_package_version` from the environment.
+- Plugin class `Cyclist` registers command `cycle-view-modes`.
+- `main.ts` uses the public `MarkdownView.getMode()` and `editorLivePreviewField` APIs for mode detection, and `WorkspaceLeaf.setViewState()` to switch modes. The `mode`/`source` keys inside `ViewState.state` are the de-facto standard for deterministic mode switching.
+- Rapid command invocations are guarded by awaiting the in-flight `setViewState()` promise before starting a new transition.
+- `version-bump.mjs` only works when run via `npm version` because it reads `npm_package_version` from the environment. It writes `manifest.json` and `versions.json` atomically via temp files.
 
 ## Style
 
 - `.editorconfig`: tabs, indent size 4, LF, UTF-8, final newline.
-- ESLint flat config lives in `eslint.config.mjs` (`eslint-plugin-obsidianmd`). Legacy `.eslintrc` is present but inactive. No lint script exists; run `npx eslint` manually if needed.
+- ESLint flat config lives in `eslint.config.mjs` (`eslint-plugin-obsidianmd`). Legacy `.eslintrc` has been removed.
 
 ## Releasing
 
