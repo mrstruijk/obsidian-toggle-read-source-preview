@@ -5,7 +5,7 @@ type ViewMode = 'reading' | 'live-preview' | 'source';
 export default class Cyclist extends Plugin {
 	onload() {
 		this.addCommand({
-			id: 'cyclist',
+			id: 'cycle-view-modes',
 			name: 'Cycle view modes (reading / live preview / source)',
 			callback: () => void this.cycleViewModes(),
 		});
@@ -20,7 +20,8 @@ export default class Cyclist extends Plugin {
 			return state?.source === false ? 'live-preview' : 'source';
 		}
 
-		return 'source'; // fallback
+		// Defensive fallback: Obsidian currently only exposes 'preview' and 'source'.
+		return 'source';
 	}
 
 	private getNextMode(current: ViewMode): ViewMode {
@@ -35,24 +36,28 @@ export default class Cyclist extends Plugin {
 		if (viewState.type !== 'markdown') return;
 		if (!viewState.state) return;
 
+		const nextState = { ...viewState.state };
+
 		switch (mode) {
 			case 'reading':
-				viewState.state.mode = 'preview';
-				viewState.state.source = false;
+				nextState.mode = 'preview';
+				nextState.source = false;
 				break;
 			case 'live-preview':
-				viewState.state.mode = 'source';
-				viewState.state.source = false;
+				nextState.mode = 'source';
+				nextState.source = false;
 				break;
 			case 'source':
-				viewState.state.mode = 'source';
-				viewState.state.source = true;
+				nextState.mode = 'source';
+				nextState.source = true;
 				break;
+			default:
+				return;
 		}
 
-		void Promise.resolve(leaf.setViewState(viewState));
+		void leaf.setViewState({ ...viewState, state: nextState });
 	}
-	
+
 	private cycleViewModes() {
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		if (!activeView) return;
@@ -60,11 +65,7 @@ export default class Cyclist extends Plugin {
 		const currentMode = this.getCurrentMode(activeView);
 		const nextMode = this.getNextMode(currentMode);
 
-		const shouldUseLivePreview = nextMode === 'live-preview';
-		void Promise.resolve(this.app.vault.setConfig('livePreview', shouldUseLivePreview));
-
-		this.app.workspace.iterateAllLeaves(leaf => {
-			void this.setViewMode(leaf, nextMode);
-		});
+		const leaf = activeView.leaf;
+		void this.setViewMode(leaf, nextMode);
 	}
 }
