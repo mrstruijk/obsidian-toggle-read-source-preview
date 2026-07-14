@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-toggle-read-source-preview",
+	"name": "obsidian-cyclist",
 	"version": "0.0.1",
 	"description": "This is a hotkey plugin to toggle modes in Obsidian (https://obsidian.md)",
 	"main": "main.js",

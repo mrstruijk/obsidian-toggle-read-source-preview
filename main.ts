@@ -2,11 +2,11 @@ import { Plugin, MarkdownView, WorkspaceLeaf } from 'obsidian';
 
 type ViewMode = 'reading' | 'live-preview' | 'source';
 
-export default class ToggleReadSourcePreview extends Plugin {
+export default class Cyclist extends Plugin {
 	onload() {
 		this.addCommand({
-			id: 'toggleReadSourcePreview',
-			name: 'Toggle modes (source/live preview/reading)',
+			id: 'cyclist',
+			name: 'Cycle view modes (reading / live preview / source)',
 			callback: () => void this.cycleViewModes(),
 		});
 	}

@@ -1,10 +1,10 @@
-# Cycling Modes Hotkey
-A simple plugin which adds a command and a hotkey to toggle between "Source" and "Live Preview" and "Reading".
+# Cyclist
+A simple plugin which adds a command and a hotkey to cycle between "Reading", "Live Preview", and "Source".
 This command cycles through the modes each time you press it. These changes will affect all open editors.
 
 ## Usage
 ### Via command palette
-Search for 'Toggle Modes (Source/Live Preview/Reading)'
+Search for 'Cycle view modes (reading / live preview / source)'
 
 ### Via hotkey
 You can set a hotkey in the 'Hotkeys' section of Obsidian. 
@@ -13,7 +13,7 @@ You can set a hotkey in the 'Hotkeys' section of Obsidian.
 
 You can add a GUI button for with [Commander](https://github.com/phibr0/obsidian-commander).
 For example in the Tab bar:
-- Obsidian Settings - Community Plugins - Commander - Tab Bar - Add command - Search for "Toggle Modes (Source/Live Preview/Reading)" - Choose an icon - Save
+- Obsidian Settings - Community Plugins - Commander - Tab Bar - Add command - Search for "Cycle view modes (reading / live preview / source)" - Choose an icon - Save
 
 Additionally, you can remove the default Live-Preview / Read button in the tab bar with this CSS snippet. 
 ``` css
